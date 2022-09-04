@@ -24,7 +24,7 @@ class Album:
             Raise("Invalid entry.")
 
         self.Timestamp = datetime.strptime(Entry[0], "%m/%d/%Y %H:%M:%S")
-        self.Name = email if email not in NAMES else NAMES[email]
+        self.Member = email if email not in NAMES else NAMES[email]
         self.Title = Entry[2].title().strip()
         self.Artist = Entry[3].title().strip()
         self.Genre = Entry[4].title().strip()

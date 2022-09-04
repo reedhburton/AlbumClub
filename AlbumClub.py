@@ -1,81 +1,141 @@
 import pygsheets
-import pandas as pd
-from datetime import datetime
 from Album import Album
 from Menu import Menu
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import pandas as pd
+import random
+
+LOOKBACK = 2
 
 
-def getData():
-    # authorization
-    gc = pygsheets.authorize(
-        service_file="/Users/Reed/Documents/Programming/cone-inc-album-club-6f68b289cf9d.json"
-    )
+class AlbumClub:
+    def __init__(self, service_file, suggestion_form):
+        # Fields
+        self.genres = set()
+        self.members = set()
+        self.played = []
+        self.unplayed = []
+        self.albums = []
+        self.lookBack = LOOKBACK
+        self.albumType = "LP"
+        self.albumTypes = {"LP", "EP", "Compilation", "Single"}
 
-    # open the google spreadsheet (where 'PY to Gsheet Test' is the name of my sheet)
-    sh = gc.open("Cone Inc Album Club - Album Suggestion Form (Responses)")
+        random.seed()
+        # define the scope
+        scope = [
+            "https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/drive",
+        ]
 
-    # select the first sheet
-    wks = sh[0]
+        # add credentials to the account
+        creds = ServiceAccountCredentials.from_json_keyfile_name(
+            service_file,
+            scope,
+        )
+        client = gspread.authorize(creds)
 
-    entries = wks.get_all_values(
-        include_tailing_empty=True, include_tailing_empty_rows=False
-    )[1:]
+        wks = client.open(suggestion_form).sheet1
+        entries = wks.get_values()[1:]
 
-    albums = []
+        for entry in entries:
+            album = Album(entry)
+            self.albums.append(album)
+            # Genre
+            genre = album.Genre
+            other = album.OtherGenre
+            if genre == "Other (Please see next question)":
+                genre = other
+            self.genres.add(genre)
+            # Check if it has already been played
+            if album.Week == None:
+                self.unplayed.append(album)
+            else:
+                self.played.append(album)
 
-    for entry in entries:
-        albums.append(Album(entry))
+            # Get data on people
+            person = album.Member
+            self.members.add(person)
 
-    return albums
+        self.played.sort(reverse=True, key=lambda album: album.Week)
 
+        self.updateWhitelist()
 
-if __name__ == "__main__":
-    print("Welcome to the Cone Inc Album Club!")
-    print("###################################")
-    albums = getData()
+        raw_data = wks.get_all_records()
+        self.df = pd.DataFrame.from_dict(raw_data)
 
-    genres = {}
-    people = {}
-    played = []
-    unplayed = []
+    def updateWhitelist(self):
+        if self.lookBack > len(self.played):
+            raise ("lookBack larger than number of played albums.")
 
-    # Iterate through all albums
-    for album in albums:
-        # Genre
-        genre = album.Genre
-        other = album.OtherGenre
-        if genre == "Other (Please see next question)":
-            genre = other
-        if genre not in genres:
-            genres[genre] = 1
-        else:
-            genres[genre] += 1
+        self.genreWhitelist = self.genres.copy()
+        self.memberWhitelist = self.members.copy()
+        print(self.played)
+        for album in self.played[: self.lookBack]:
+            self.memberWhitelist.remove(album.Member)
+            self.genreWhitelist.remove(album.Genre)
 
-        # Get data on people
-        person = album.Name
-        if person not in people:
-            people[person] = 1
-        else:
-            people[person] += 1
+    def displayWhitelist(self):
+        print("Members:")
+        for index, member in enumerate(self.members):
+            print(f"[{index}] {member}: {member in self.memberWhitelist}")
+        print("Genres:")
+        for index, genre in enumerate(self.genres):
+            print(f"[{index}] {genre}: {genre in self.genreWhitelist}")
 
-        # Check if it has already been played
-        if album.Week == None:
-            unplayed.append(album)
-        else:
-            played.append(album)
+    def selectAlbum(self):
+        index = random.randint(0, len(self.memberWhitelist) - 1)
+        winningMember = list(self.memberWhitelist)[index]
 
-    played.sort(reverse=False, key=lambda album: album.Week)
-    print(people)
+        validAlbums = [
+            album
+            for album in self.unplayed
+            if album.Genre in self.genreWhitelist
+            and album.Member is winningMember
+            and album.Type is self.albumType
+        ]
+        index = random.randint(0, len(validAlbums) - 1)
+        winner = validAlbums[index]
+        print(winningMember)
+        print(winner)
 
-    menu = Menu(people, genres)
-    user_input = ""
+    def displayMemberStats(self):
+        type_filter = lambda x: x.Type == self.albumType
+        played = list(filter(type_filter, self.played))
+        unplayed = list(filter(type_filter, self.unplayed))
+        print(
+            f"Members stats (Total {self.albumType}s: {len(played) + len(unplayed)}): Total Submitted / Total Selected / Total Unselected"
+        )
+        for index, member in enumerate(self.members):
+            picked = len([album for album in played if album.Member == member])
+            unpicked = len([album for album in unplayed if album.Member == member])
+            print(
+                f"[{index}] {member}: {picked + unpicked} / {picked} / {unpicked - picked}"
+            )
 
-    menu.main_menu()
+    def displayGenreStats(self):
+        type_filter = lambda x: x.Type == self.albumType
+        played = list(filter(type_filter, self.played))
+        unplayed = list(filter(type_filter, self.unplayed))
+        print(
+            f"Genre stats (Total {self.albumType}s: {len(played) + len(unplayed)}): Total Submitted / Total Selected / Total Unselected"
+        )
+        for index, genre in enumerate(self.genres):
+            picked = len([album for album in played if album.Genre == genre])
+            unpicked = len([album for album in unplayed if album.Genre == genre])
+            print(
+                f"[{index}] {genre}: {picked + unpicked} / {picked} / {unpicked - picked}"
+            )
 
-    selected = [
-        album
-        for album in albums
-        if album.Genre == "Instrumental / Classical"
-        and album.Type == "LP"
-        and album.Week == ""
-    ]
+    def setLookBack(self, newLookBack):
+        try:
+            lookBack = int(newLookBack)
+            if lookBack < 0:
+                print(f"'{lookBack}' is out of range")
+            self.lookBack = lookBack
+            self.updateWhitelist()
+        except ValueError:
+            print(f"'{newLookBack}' is not a valid number")
+
+    def setAlbumType(self, albumType):
+        self.albumType = albumType

@@ -1,19 +1,17 @@
 class Menu:
-    def __init__(self, people, genres):
-        self.lookBack = 1  # Prevent same categories from repeating
-        self.albumType = "LP"
-        self.people = list(people.keys()).sort()
-        self.genres = genres.keys()
-        self.peopleFilter = people
-        self.genreFilter = genres
+    def __init__(self):
+        pass
 
-    def main_menu(self):
+    def main_menu(self, albumType, lookBack):
         print(
             "Please select select one of the following options:"
             + "\n[0] Select a new album"
-            + f"\n[1] Edit Album Type (Currently: {self.albumType})"
-            + f"\n[2] Edit the number of weeks to look back (Currently: {self.lookBack})"
-            + "\n[5] Close"
+            + f"\n[1] Edit Album Type (Currently: {albumType})"
+            + f"\n[2] Edit the number of weeks to look back (Currently: {lookBack})"
+            + f"\n[3] Display member info"
+            + f"\n[4] Display genre info"
+            + f"\n[5] Display whitelist info"
+            + "\n[10] Close"
         )
 
     def setAlbumType(self):
@@ -24,23 +22,6 @@ class Menu:
             + "\n[2] LP"
             + "\n[3] Compilation"
         )
-        selection = input(">: ")
-        if selection == "0":
-            self.albumType = "Single"
-        elif selection == "1":
-            self.albumType = "EP"
-        elif selection == "2":
-            self.albumType = "LP"
-        elif selection == "3":
-            self.albumType = "Compilation"
-        else:
-            print(f"'{selection}' is not a valid selection.")
 
-    def setLookBack(self, newLookBack):
-        try:
-            lookBack = int(newLookBack)
-        except ValueError:
-            print(f"'{newLookBack}' is not a valid number")
-        if lookBack < 0:
-            print(f"'{lookBack}' is out of range")
-        self.lookBack = lookBack
+    def setLookBack(self, lookBack):
+        print(f"Input new look back value. Current look back: {lookBack}")
