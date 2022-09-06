@@ -27,7 +27,7 @@ class Album:
         self.Member = email if email not in NAMES else NAMES[email]
         self.Title = Entry[2].title().strip()
         self.Artist = Entry[3].title().strip()
-        self.Genre = Entry[4].title().strip()
+        self.Genre = Entry[4].strip()
         self.OtherGenre = Entry[5].title().strip()
         self.Listened = Entry[6] in ("Yes")
         self.Significance = Entry[7]

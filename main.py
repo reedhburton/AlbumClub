@@ -15,9 +15,6 @@ if __name__ == "__main__":
     print("###################################")
 
     club = AlbumClub(SERVICE_FILE_PATH, SUGGESTION_FORM)
-    # club.displayWhitelist()
-    # club.displayGenreStats()
-    # club.displayMemberStats()
 
     menu = Menu()
 

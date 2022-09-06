@@ -1,3 +1,4 @@
+from tkinter import W
 import pygsheets
 from Album import Album
 from Menu import Menu
@@ -6,7 +7,36 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import random
 
-LOOKBACK = 2
+LOOKBACK = 3
+DEFAULT_GENRES = {
+    "Rock",
+    "Country",
+    "Folk",
+    "Rap",
+    "Pop",
+    "Jazz",
+    "Metal / Hard Rock",
+    "Punk",
+    "Funk",
+    "R&B",
+    "2010's",
+    "2000's",
+    "90s",
+    "80s",
+    "70s",
+    "60s",
+    "50s",
+    "40s",
+    "Big Band / 20-30s",
+    "1910s and before",
+    "Latin / Mariachi",
+    "Accapella",
+    "Electronic",
+    "Alternative",
+    "Instrumental / Classical",
+    "Musical / Show Tune",
+    "Indie",
+}
 
 
 class AlbumClub:
@@ -20,6 +50,8 @@ class AlbumClub:
         self.lookBack = LOOKBACK
         self.albumType = "LP"
         self.albumTypes = {"LP", "EP", "Compilation", "Single"}
+
+        self.genres.update(DEFAULT_GENRES)
 
         random.seed()
         # define the scope
@@ -70,7 +102,6 @@ class AlbumClub:
 
         self.genreWhitelist = self.genres.copy()
         self.memberWhitelist = self.members.copy()
-        print(self.played)
         for album in self.played[: self.lookBack]:
             self.memberWhitelist.remove(album.Member)
             self.genreWhitelist.remove(album.Genre)
@@ -84,20 +115,53 @@ class AlbumClub:
             print(f"[{index}] {genre}: {genre in self.genreWhitelist}")
 
     def selectAlbum(self):
-        index = random.randint(0, len(self.memberWhitelist) - 1)
-        winningMember = list(self.memberWhitelist)[index]
+        validAlbums = []
+        input("Press enter to continue...")
+        validTypes = {self.albumType}
+        if self.albumType == "LP":
+            user_input = input("Include compilations in pool? [Y/n]>: ")
+            if user_input.lower() != "n":
+                validTypes.add("Compilation")
+        while len(validAlbums) < 1:
+            index = random.randint(0, len(self.genreWhitelist) - 1)
+            winningGenre = list(self.genreWhitelist)[index]
+            validAlbums = [
+                album
+                for album in self.unplayed
+                if album.Genre is winningGenre
+                and album.Member in self.memberWhitelist
+                and album.Type in validTypes
+            ]
 
-        validAlbums = [
-            album
-            for album in self.unplayed
-            if album.Genre in self.genreWhitelist
-            and album.Member is winningMember
-            and album.Type is self.albumType
-        ]
-        index = random.randint(0, len(validAlbums) - 1)
-        winner = validAlbums[index]
-        print(winningMember)
-        print(winner)
+        input(f"Winning genre is: {winningGenre}. Press enter to continue.")
+
+        member_pool = set()
+        for album in validAlbums:
+            member_pool.add(album.Member)
+
+        index = random.randint(0, len(member_pool) - 1)
+        winningMember = list(member_pool)[index]
+
+        winnerPool = list(filter(lambda x: x.Member is winningMember, validAlbums))
+
+        print(f"Winning member: {winningMember}")
+        print("Valid albums:")
+        for index, album in enumerate(winnerPool):
+            print(f"[{index}]: {album}")
+
+        user_input = input("Would you like to randomly select a winner? [Y/n] >: ")
+
+        if user_input.lower() == "n":
+            print(
+                f"Congrats to {winningMember} for being selected for this week's album club nominee!"
+            )
+        else:
+            index = random.randint(0, len(winnerPool) - 1)
+            winner = winnerPool[index]
+            print(
+                f"Congrats to {winningMember} for being selected for this week's album club nominee!"
+                + f"\nThe winning album is {winner}!"
+            )
 
     def displayMemberStats(self):
         type_filter = lambda x: x.Type == self.albumType
@@ -109,9 +173,7 @@ class AlbumClub:
         for index, member in enumerate(self.members):
             picked = len([album for album in played if album.Member == member])
             unpicked = len([album for album in unplayed if album.Member == member])
-            print(
-                f"[{index}] {member}: {picked + unpicked} / {picked} / {unpicked - picked}"
-            )
+            print(f"[{index}] {member}: {picked + unpicked} / {picked} / {unpicked}")
 
     def displayGenreStats(self):
         type_filter = lambda x: x.Type == self.albumType
@@ -123,9 +185,7 @@ class AlbumClub:
         for index, genre in enumerate(self.genres):
             picked = len([album for album in played if album.Genre == genre])
             unpicked = len([album for album in unplayed if album.Genre == genre])
-            print(
-                f"[{index}] {genre}: {picked + unpicked} / {picked} / {unpicked - picked}"
-            )
+            print(f"[{index}] {genre}: {picked + unpicked} / {picked} / {unpicked}")
 
     def setLookBack(self, newLookBack):
         try:
