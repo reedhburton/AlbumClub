@@ -7,7 +7,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import random
 
-LOOKBACK = 3
+LOOKBACK = 4
 DEFAULT_GENRES = {
     "Rock",
     "Country",
@@ -122,16 +122,25 @@ class AlbumClub:
             user_input = input("Include compilations in pool? [Y/n]>: ")
             if user_input.lower() != "n":
                 validTypes.add("Compilation")
-        while len(validAlbums) < 1:
-            index = random.randint(0, len(self.genreWhitelist) - 1)
-            winningGenre = list(self.genreWhitelist)[index]
+
+        # Genres
+        genreList = list(self.genreWhitelist)
+        order = list(range(0, len(genreList)))
+        random.shuffle(order)
+        for index in order:
+            winningGenre = genreList[index]
             validAlbums = [
                 album
                 for album in self.unplayed
-                if album.Genre is winningGenre
+                if album.Genre == winningGenre
                 and album.Member in self.memberWhitelist
                 and album.Type in validTypes
             ]
+            if len(validAlbums) != 0:
+                break
+        if len(validAlbums) == 0:
+            print("No valid albums!")
+            return
 
         input(f"Winning genre is: {winningGenre}. Press enter to continue.")
 
