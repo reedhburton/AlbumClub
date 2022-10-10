@@ -2,15 +2,16 @@ class Menu:
     def __init__(self):
         pass
 
-    def main_menu(self, albumType, lookBack):
+    def main_menu(self, albumType, memberLookBack, genreLookBack):
         print(
             "Please select select one of the following options:"
             + "\n[0] Select a new album"
             + f"\n[1] Edit Album Type (Currently: {albumType})"
-            + f"\n[2] Edit the number of weeks to look back (Currently: {lookBack})"
-            + f"\n[3] Display member info"
-            + f"\n[4] Display genre info"
-            + f"\n[5] Display whitelist info"
+            + f"\n[2] Edit the number of weeks to look back for members (Currently: {memberLookBack})"
+            + f"\n[3] Edit the number of weeks to look back for genres (Currently: {genreLookBack})"
+            + f"\n[4] Display member info"
+            + f"\n[5] Display genre info"
+            + f"\n[6] Display whitelist info"
             + "\n[10] Close"
         )
 

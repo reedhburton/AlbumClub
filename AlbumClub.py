@@ -7,7 +7,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import random
 
-LOOKBACK = 4
+MEMBER_LOOKBACK = 7
+GENRE_LOOKBACK = 5
 DEFAULT_GENRES = {
     "Rock",
     "Country",
@@ -47,7 +48,8 @@ class AlbumClub:
         self.played = []
         self.unplayed = []
         self.albums = []
-        self.lookBack = LOOKBACK
+        self.memberLookBack = MEMBER_LOOKBACK
+        self.genreLookBack = GENRE_LOOKBACK
         self.albumType = "LP"
         self.albumTypes = {"LP", "EP", "Compilation", "Single"}
 
@@ -97,13 +99,18 @@ class AlbumClub:
         self.df = pd.DataFrame.from_dict(raw_data)
 
     def updateWhitelist(self):
-        if self.lookBack > len(self.played):
+        if self.memberLookBack > len(self.played) or self.genreLookBack > len(
+            self.played
+        ):
             raise ("lookBack larger than number of played albums.")
 
         self.genreWhitelist = self.genres.copy()
         self.memberWhitelist = self.members.copy()
-        for album in self.played[: self.lookBack]:
+
+        for album in self.played[: self.memberLookBack]:
             self.memberWhitelist.remove(album.Member)
+
+        for album in self.played[: self.genreLookBack]:
             self.genreWhitelist.remove(album.Genre)
 
     def displayWhitelist(self):
@@ -196,12 +203,22 @@ class AlbumClub:
             unpicked = len([album for album in unplayed if album.Genre == genre])
             print(f"[{index}] {genre}: {picked + unpicked} / {picked} / {unpicked}")
 
-    def setLookBack(self, newLookBack):
+    def setMemberLookBack(self, newLookBack):
         try:
             lookBack = int(newLookBack)
             if lookBack < 0:
                 print(f"'{lookBack}' is out of range")
-            self.lookBack = lookBack
+            self.memberLookBack = lookBack
+            self.updateWhitelist()
+        except ValueError:
+            print(f"'{newLookBack}' is not a valid number")
+
+    def setGenreLookBack(self, newLookBack):
+        try:
+            lookBack = int(newLookBack)
+            if lookBack < 0:
+                print(f"'{lookBack}' is out of range")
+            self.genreLookBack = lookBack
             self.updateWhitelist()
         except ValueError:
             print(f"'{newLookBack}' is not a valid number")

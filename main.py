@@ -7,7 +7,7 @@ from AlbumClub import AlbumClub
 SERVICE_FILE_PATH = (
     "/Users/Reed/Documents/Programming/cone-inc-album-club-6f68b289cf9d.json"
 )
-SUGGESTION_FORM = "Cone Inc Album Club - Album Suggestion Form (Responses)"
+SUGGESTION_FORM = "Album Suggestion Form (Responses)"
 
 
 if __name__ == "__main__":
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     menu = Menu()
 
     while True:
-        menu.main_menu(club.albumType, club.lookBack)
+        menu.main_menu(club.albumType, club.memberLookBack, club.genreLookBack)
         user_selection = input(">: ")
         if user_selection == "0":
             club.selectAlbum()
@@ -44,7 +44,7 @@ if __name__ == "__main__":
                     continue
         elif user_selection == "2":
             while True:
-                menu.setLookBack(club.lookBack)
+                menu.setLookBack(club.memberLookBack)
                 user_selection = input(">: ")
                 try:
                     lookBack = int(user_selection)
@@ -52,17 +52,33 @@ if __name__ == "__main__":
                         print(f"Lookback of {lookBack} is too high!")
                         continue
                     else:
-                        club.setLookBack(lookBack)
+                        club.setMemberLookBack(lookBack)
                         club.updateWhitelist
                         break
                 except ValueError:
                     print(f"Invalid input: '{user_selection}'")
                     continue
         elif user_selection == "3":
-            club.displayMemberStats()
+            while True:
+                menu.setLookBack(club.genreLookBack)
+                user_selection = input(">: ")
+                try:
+                    lookBack = int(user_selection)
+                    if lookBack > len(club.played):
+                        print(f"Lookback of {lookBack} is too high!")
+                        continue
+                    else:
+                        club.setGenreLookBack(lookBack)
+                        club.updateWhitelist
+                        break
+                except ValueError:
+                    print(f"Invalid input: '{user_selection}'")
+                    continue
         elif user_selection == "4":
-            club.displayGenreStats()
+            club.displayMemberStats()
         elif user_selection == "5":
+            club.displayGenreStats()
+        elif user_selection == "6":
             club.displayWhitelist()
         elif user_selection == "10":
             break

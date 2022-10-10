@@ -10,9 +10,11 @@ NAMES = {
     "aguilarjr.josel@gmail.com": "Jose",
     "emmibear88@gmail.com": "Emmi",
     "aiannacone88@gmail.com": "Cone",
+    "anthony.g.iannacone@gamil.com": "Cone",
     "anthony.g.iannacone@gmail.com": "Cone",
     "emma.busstop949@gmail.com": "Emma",
     "sky.chilek@gmail.com": "Sky",
+    "portis.avrey@gmail.com": "Avery",
 }
 
 
